@@ -1,0 +1,24 @@
+[
+  {
+    "name": "robot",
+    "className": "com.zdr.demo.ioc.test.entity.Robot"
+  },
+  {
+    "name": "hand",
+    "className": "com.zdr.demo.ioc.test.entity.Hand"
+  },
+  {
+    "name": "mouth",
+    "className": "com.zdr.demo.ioc.test.entity.Mouth",
+    "constructorArgs": [
+      {
+        "index": 1,
+        "name": "name",
+        "value": "hello"
+      }
+    ]
+  }
+]
+
+
+
