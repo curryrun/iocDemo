@@ -10,11 +10,14 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.zdr.demo.ioc.utils.ReflectionUtils;
 import com.zdr.demo.ioc.utils.ThreadPoolExecutorUtil;
@@ -33,6 +36,8 @@ public class BeanFactoryImpl implements BeanFactory {
 
     private static final Set<String> beanNameSet = Collections.synchronizedSet(new HashSet<>());
 
+    private final Map<String, Object> earlySingletonObjects = new HashMap<String, Object>(16);
+
     @Override
     public Object getBean(String name) throws Exception {
         Object bean = beanMap.get(name);
@@ -45,6 +50,34 @@ public class BeanFactoryImpl implements BeanFactory {
             beanMap.put(name, bean);
         }
 
+        return bean;
+    }
+
+    @Override
+    public Object getNoCircleBean(String name) throws Exception {
+        //查找对象是否已经实例化过
+        Object bean = beanMap.get(name);
+        if (bean != null) {
+            return bean;
+        }
+        Object earlyBean = earlySingletonObjects.get(name);
+        if (earlyBean != null) {
+            System.out.println("循环依赖，提前返回尚未加载完成的bean:" + name);
+            return earlyBean;
+        }
+        //如果没有实例化，那就需要调用createBean来创建对象
+        BeanDefinition beanDefinition = beanDefineMap.get(name);
+        bean = createBean(beanDefinition);
+        if (bean != null) {
+            earlySingletonObjects.put(name, bean);
+            //对象创建成功以后，注入对象需要的参数
+            populatebean(bean);
+            //再吧对象存入Map中方便下次使用。
+            beanMap.put(name, bean);
+            //从早期单例Map中移除
+            earlySingletonObjects.remove(name);
+        }
+        //结束返回
         return bean;
     }
 
@@ -111,7 +144,7 @@ public class BeanFactoryImpl implements BeanFactory {
         beanNameSet.add(name);
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         ConcurrentHashMap c = new ConcurrentHashMap();
 //        Runnable r = () -> 42;
         ThreadPoolExecutorUtil.getInstance().getThreadPoolExecutorService().execute(() -> System.out.println("1123"));
@@ -120,6 +153,11 @@ public class BeanFactoryImpl implements BeanFactory {
         list.stream().map((x) -> x * x).forEach(System.out::println);
         String s = new String("hello123");
         s.hashCode();
+        ReentrantLock lock = new ReentrantLock(true);
+        lock.lock();
+        lock.unlock();
+        lock.tryLock(1L, TimeUnit.MILLISECONDS);
+        lock.unlock();
     }
 
 }
