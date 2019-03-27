@@ -12,7 +12,7 @@ public class TestApplication {
     public static void main(String[] args) throws Exception {
         JsonApplicationContext context = new JsonApplicationContext("application.json");
         context.init();
-        Robot myRobot = (Robot) context.getBean("robot");
+        Robot myRobot = (Robot) context.getNoCircleBean("robot");
         myRobot.show();
     }
 

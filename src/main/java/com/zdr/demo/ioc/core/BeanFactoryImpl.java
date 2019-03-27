@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -158,6 +160,13 @@ public class BeanFactoryImpl implements BeanFactory {
         lock.unlock();
         lock.tryLock(1L, TimeUnit.MILLISECONDS);
         lock.unlock();
+
+        CountDownLatch latch = new CountDownLatch(5);
+        latch.countDown();
+        latch.await();
+
+        CyclicBarrier cyclicBarrier = new CyclicBarrier(5);
+        cyclicBarrier.await();
     }
 
 }
